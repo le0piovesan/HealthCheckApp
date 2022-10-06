@@ -18,7 +18,7 @@ const styles = StyleSheet.create({
     padding: 10,
     margin: 10,
     alignItems: "center",
-    backgroundColor: "#579665",
+    backgroundColor: "#1f9117",
   },
   outline: {
     borderRadius: 20,
@@ -27,14 +27,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "#fff",
     borderWidth: 3,
-    borderColor: "#579665",
+    borderColor: "#1f9117",
   },
   text: {
     color: "#fff",
     fontWeight: "bold",
   },
   textOutline: {
-    color: "#579665",
+    color: "#1f9117",
     fontWeight: "bold",
   },
 });

@@ -1,10 +1,10 @@
 import db from "./SQLiteDatabase";
 
 db.transaction((tx) => {
-  // tx.executeSql("DROP TABLE users;");
+  // tx.executeSql("DROP TABLE consultas;");
 
   tx.executeSql(
-    "CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, user TEXT, email TEXT, password TEXT);"
+    "CREATE TABLE IF NOT EXISTS consultas (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, date TEXT, insurance INT, userReference INT);"
   );
 });
 
@@ -12,8 +12,8 @@ const create = (obj) => {
   return new Promise((resolve, reject) => {
     db.transaction((tx) => {
       tx.executeSql(
-        "INSERT INTO users (name, user, email, password) values (?, ?, ?, ?);",
-        [obj.name, obj.user, obj.email, obj.password],
+        "INSERT INTO consultas (name, date, insurance, userReference) values (?, ?, ?, ?);",
+        [obj.name, obj.date, obj.insurance, obj.userReference],
         //-----------------------
         (_, { rowsAffected, insertId }) => {
           if (rowsAffected > 0) resolve(insertId);
@@ -29,8 +29,8 @@ const update = (id, obj) => {
   return new Promise((resolve, reject) => {
     db.transaction((tx) => {
       tx.executeSql(
-        "UPDATE users SET name=?, user=?, email=?, password=? WHERE id=?;",
-        [obj.name, obj.user, obj.email, obj.password, id],
+        "UPDATE consultas SET name=?, date=?, insurance=? WHERE id=?;",
+        [obj.name, obj.date, obj.insurance, id],
         //-----------------------
         (_, { rowsAffected }) => {
           if (rowsAffected > 0) resolve(rowsAffected);
@@ -46,12 +46,12 @@ const find = (id) => {
   return new Promise((resolve, reject) => {
     db.transaction((tx) => {
       tx.executeSql(
-        "SELECT * FROM users WHERE id=?;",
+        "SELECT * FROM consultas WHERE id=?;",
         [id],
         //-----------------------
         (_, { rows }) => {
           if (rows.length > 0) resolve(rows._array[0]);
-          else reject("User not found: id=" + id);
+          else reject("Obj not found: id=" + id);
         },
         (_, error) => reject(error)
       );
@@ -59,16 +59,16 @@ const find = (id) => {
   });
 };
 
-const findByUserName = (user) => {
+const findConsultasByUserId = (user) => {
   return new Promise((resolve, reject) => {
     db.transaction((tx) => {
       tx.executeSql(
-        "SELECT * FROM users WHERE user LIKE ?;",
+        "SELECT * FROM consultas WHERE userReference = ?;",
         [user],
         //-----------------------
         (_, { rows }) => {
           if (rows.length > 0) resolve(rows._array);
-          else reject("Obj not found: user=" + user);
+          // else reject("Consultas not found: user=" + user);
         },
         (_, error) => reject(error)
       );
@@ -80,9 +80,9 @@ const all = () => {
   return new Promise((resolve, reject) => {
     db.transaction((tx) => {
       tx.executeSql(
-        "SELECT * FROM users;",
+        "SELECT * FROM consultas;",
         [],
-
+        //-----------------------
         (_, { rows }) => resolve(rows._array),
         (_, error) => reject(error)
       );
@@ -94,9 +94,9 @@ const remove = (id) => {
   return new Promise((resolve, reject) => {
     db.transaction((tx) => {
       tx.executeSql(
-        "DELETE FROM users WHERE id=?;",
+        "DELETE FROM consultas WHERE id=?;",
         [id],
-
+        //-----------------------
         (_, { rowsAffected }) => {
           resolve(rowsAffected);
         },
@@ -110,7 +110,7 @@ export default {
   create,
   update,
   find,
-  findByUserName,
+  findConsultasByUserId,
   all,
   remove,
 };

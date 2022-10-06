@@ -1,5 +1,5 @@
 import * as SQLite from "expo-sqlite";
 
-const db = SQLite.openDatabase("teste.db");
+const db = SQLite.openDatabase("healthcheck.db");
 
 export default db;

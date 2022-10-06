@@ -7,48 +7,176 @@ import {
   View,
   ScrollView,
   TouchableOpacity,
+  ActivityIndicator,
+  Image,
 } from "react-native";
-import Button from "../components/Button";
+
+import {
+  Ionicons,
+  AntDesign,
+  FontAwesome,
+  FontAwesome5,
+} from "@expo/vector-icons";
+import Consulta from "../services/sqlite/Consulta";
 import User from "../services/sqlite/User";
 
-const especialidades = [
-  { nome: "Otorrinolaringologista" },
-  { nome: "Dermatologista" },
-  { nome: "Dentista" },
-  { nome: "Endócrinologista" },
-  { nome: "Cardiologista" },
-  { nome: "Outros" },
-];
-
-export default function Home({ navigation }) {
-  const [listUsers, setListUsers] = useState([]);
+export default function Home({ route, navigation }) {
+  const [listConsultas, setListConsultas] = useState([]);
+  const [userData, setUserData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const { currentUserName, currentUserId } = route.params;
 
   useEffect(() => {
-    User.all().then((users) => users.forEach((u) => printUser(u)));
+    fetchData();
+    setTimeout(() => {
+      setLoading(false);
+    }, 3000);
   }, []);
 
-  const printUser = (user) => {
-    console.log(
-      `id:${user.id}, name:${user.name}, user:${user.user}, email:${user.email}, password:${user.password}`
-    );
+  useEffect(() => {
+    const unsubscribe = navigation.addListener("focus", () => {
+      fetchData();
+    });
+
+    return unsubscribe;
+  }, [navigation]);
+
+  const fetchData = async () => {
+    try {
+      const response = await Consulta.findConsultasByUserId(currentUserId);
+      const responseUser = await User.find(currentUserId);
+      setListConsultas(response);
+      setUserData(responseUser);
+    } catch (err) {
+      console.log(err);
+    }
   };
+
+  const handleFavorite = async ({ id, name, date, insurance }) => {
+    const response = await Consulta.update(id, {
+      name,
+      date,
+      insurance: !insurance,
+    });
+    fetchData();
+  };
+
+  const handleDelete = async (id) => {
+    const response = await Consulta.remove(id);
+    if (listConsultas.length == 1) setListConsultas([]);
+    fetchData();
+  };
+
+  if (loading) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          backgroundColor: "#fff",
+        }}
+      >
+        <Image source={require("../../assets/splash-hc.gif")} />
+      </View>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
       <View>
-        <Text style={styles.title}>Health Check</Text>
-        <Text style={styles.subtitle}>Qual especialidade está procurando?</Text>
+        <Text style={styles.title}>
+          Bem vindo,{" "}
+          {currentUserName
+            ? currentUserName
+            : userData && userData.name
+            ? userData.name
+            : "Teste"}
+        </Text>
+        <Text style={styles.subtitle}>
+          Clique no botão abaixo para agendar uma consulta
+        </Text>
+        <TouchableOpacity
+          style={styles.addConsulta}
+          onPress={() =>
+            navigation.navigate("ConsultaRegister", {
+              currentUserId: currentUserId,
+            })
+          }
+        >
+          <FontAwesome5 name="clipboard-list" size={24} color="#fff" />
+          <Text style={{ color: "#fff", fontSize: 18 }}> Agendar +</Text>
+        </TouchableOpacity>
       </View>
+      <ScrollView>
+        <View style={styles.containerCards}>
+          {listConsultas && listConsultas.length > 0 ? (
+            listConsultas.map((e, idx) => {
+              return (
+                <View style={styles.card} key={e.id}>
+                  <View
+                    style={{
+                      flex: 1,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontWeight: "bold",
+                        fontSize: 20,
+                      }}
+                    >
+                      {e.name}
+                    </Text>
+                    <Text>Data: {e.date}</Text>
+                  </View>
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                    }}
+                  >
+                    <TouchableOpacity
+                      style={{ paddingHorizontal: 8 }}
+                      onPress={() => handleFavorite(e)}
+                    >
+                      {e.insurance ? (
+                        <Ionicons
+                          name="notifications"
+                          size={24}
+                          color="black"
+                        />
+                      ) : (
+                        <Ionicons
+                          name="notifications-off"
+                          size={24}
+                          color="black"
+                        />
+                      )}
+                    </TouchableOpacity>
 
-      <View style={styles.containerCards}>
-        {especialidades.map((e, idx) => {
-          return (
-            <TouchableOpacity style={styles.card} key={idx}>
-              <Text>{e.nome}</Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
+                    <TouchableOpacity
+                      style={{ paddingHorizontal: 8 }}
+                      onPress={() => handleDelete(e.id)}
+                    >
+                      <FontAwesome name="trash" size={28} color="#9c2442" />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              );
+            })
+          ) : (
+            <View>
+              <Text
+                style={{
+                  fontSize: 20,
+                }}
+              >
+                Nenhuma consulta agendada.
+              </Text>
+            </View>
+          )}
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -66,24 +194,37 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   subtitle: {
-    color: "#0b661f",
+    color: "#1f9117",
     fontSize: 18,
+    textAlign: "center",
+  },
+  addConsulta: {
+    justifyContent: "center",
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 2,
+    borderRadius: 100,
+    borderColor: "#178791",
+    backgroundColor: "#178791",
+    padding: 10,
+    margin: 20,
+    alignSelf: "center",
   },
   card: {
+    flex: 1,
+    width: "80%",
     borderWidth: 1,
     borderRadius: 5,
-    height: 50,
-    width: "100%",
-    justifyContent: "center",
+    flexDirection: "row",
     alignItems: "center",
-    margin: 8,
-    borderColor: "#0b661f",
+    justifyContent: "space-around",
+    margin: 10,
+    padding: 10,
+    borderColor: "#1f9117",
   },
   containerCards: {
     flex: 1,
-    padding: 20,
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "center",
+    padding: 10,
+    alignItems: "center",
   },
 });

@@ -7,7 +7,7 @@
     "icon": "./assets/logo-hc.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./assets/logo-hc.png",
+      "image": "./assets/health-background.jpg",
       "resizeMode": "cover",
       "backgroundColor": "#ffffff"
     },
