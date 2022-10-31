@@ -12,19 +12,29 @@ import {
 } from "react-native";
 import Button from "../components/Button";
 import { Formik } from "formik";
-import User from "../services/sqlite/User";
-import { Entypo } from "@expo/vector-icons";
+// import usuario from "../services/sqlite/usuario";
 import * as yup from "yup";
+import axios from "axios";
+import DateTimePicker from "@react-native-community/datetimepicker";
 
 const registerSchema = yup.object({
-  name: yup.string().required(),
-  user: yup.string().required(),
+  nome: yup.string().required(),
+  usuario: yup.string().required(),
+  cpf: yup.string().required(),
+  celular: yup.string().required(),
   email: yup.string().required(),
-  password: yup.string().required(),
+  senha: yup.string().required(),
 });
 
 export default function Register({ navigation }) {
-  const [passwordVisible, setPasswordVisible] = useState(false);
+  const [date, setDate] = useState(new Date());
+  const [show, setShow] = useState(false);
+
+  const onChange = (event, selectedDate) => {
+    const currentDate = selectedDate;
+    setShow(false);
+    setDate(currentDate);
+  };
 
   return (
     <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
@@ -39,14 +49,36 @@ export default function Register({ navigation }) {
           <View style={styles.main}>
             <Formik
               validationSchema={registerSchema}
-              initialValues={{ name: "", user: "", email: "", password: "" }}
-              onSubmit={({ name, email, user, password }) => {
-                User.create({ name, email, user, password })
-                  .then((id) => {
-                    console.log("User created with id: " + id);
-                    navigation.navigate("Login");
-                  })
-                  .catch((err) => console.log(err));
+              initialValues={{
+                nome: "",
+                usuario: "",
+                cpf: "",
+                celular: "",
+                email: "",
+                senha: "",
+              }}
+              onSubmit={async ({
+                nome,
+                usuario,
+                cpf,
+                celular,
+                email,
+                senha,
+              }) => {
+                try {
+                  const response = await axios.post("pessoa", {
+                    nome,
+                    usuario,
+                    cpf,
+                    celular,
+                    email,
+                    senha,
+                    data_nascimento: date,
+                  });
+                  navigation.navigate("Login");
+                } catch (err) {
+                  console.log(err);
+                }
               }}
             >
               {({
@@ -60,28 +92,56 @@ export default function Register({ navigation }) {
                 <View>
                   <Text style={styles.inputTitle}>
                     Nome{" "}
-                    {touched.name && errors.name ? (
+                    {touched.nome && errors.nome ? (
                       <Text style={styles.errorText}>* Campo obrigatório</Text>
                     ) : null}
                   </Text>
                   <TextInput
                     style={styles.input}
-                    onChangeText={handleChange("name")}
-                    onBlur={handleBlur("name")}
-                    value={values.name}
+                    onChangeText={handleChange("nome")}
+                    onBlur={handleBlur("nome")}
+                    value={values.nome}
                   />
 
                   <Text style={styles.inputTitle}>
                     Usuário{" "}
-                    {touched.user && errors.user ? (
+                    {touched.usuario && errors.usuario ? (
                       <Text style={styles.errorText}>* Campo obrigatório</Text>
                     ) : null}
                   </Text>
                   <TextInput
                     style={styles.input}
-                    onChangeText={handleChange("user")}
-                    onBlur={handleBlur("user")}
-                    value={values.user}
+                    onChangeText={handleChange("usuario")}
+                    onBlur={handleBlur("usuario")}
+                    value={values.usuario}
+                  />
+
+                  <Text style={styles.inputTitle}>
+                    CPF
+                    {touched.cpf && errors.cpf ? (
+                      <Text style={styles.errorText}>* Campo obrigatório</Text>
+                    ) : null}
+                  </Text>
+                  <TextInput
+                    style={styles.input}
+                    onChangeText={handleChange("cpf")}
+                    onBlur={handleBlur("cpf")}
+                    value={values.cpf}
+                    keyboardType="numeric"
+                  />
+
+                  <Text style={styles.inputTitle}>
+                    Celular
+                    {touched.celular && errors.celular ? (
+                      <Text style={styles.errorText}>* Campo obrigatório</Text>
+                    ) : null}
+                  </Text>
+                  <TextInput
+                    style={styles.input}
+                    onChangeText={handleChange("celular")}
+                    onBlur={handleBlur("celular")}
+                    value={values.celular}
+                    keyboardType="numeric"
                   />
 
                   <Text style={styles.inputTitle}>
@@ -95,43 +155,44 @@ export default function Register({ navigation }) {
                     onChangeText={handleChange("email")}
                     onBlur={handleBlur("email")}
                     value={values.email}
+                    keyboardType={"email-address"}
                   />
+
+                  <TouchableOpacity onPress={() => setShow(true)}>
+                    <Text
+                      style={{
+                        color: "#1f9117",
+                        paddingVertical: 10,
+                        fontSize: 18,
+                      }}
+                    >
+                      📆 Data de Nascimento
+                    </Text>
+                  </TouchableOpacity>
+
+                  {show && (
+                    <DateTimePicker
+                      testID="dateTimePicker"
+                      value={date}
+                      mode={"date"}
+                      is24Hour={true}
+                      onChange={onChange}
+                    />
+                  )}
 
                   <Text style={styles.inputTitle}>
                     Senha{" "}
-                    {touched.password && errors.password ? (
+                    {touched.senha && errors.senha ? (
                       <Text style={styles.errorText}>* Campo obrigatório</Text>
                     ) : null}
                   </Text>
 
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      alignItems: "center",
-                    }}
-                  >
-                    <TextInput
-                      style={styles.input}
-                      onChangeText={handleChange("password")}
-                      onBlur={handleBlur("password")}
-                      value={values.password}
-                      secureTextEntry={passwordVisible ? false : true}
-                    />
-
-                    <TouchableOpacity
-                      onPress={() => setPasswordVisible(!passwordVisible)}
-                    >
-                      {passwordVisible ? (
-                        <Entypo name="eye" size={32} color="#1f9117" />
-                      ) : (
-                        <Entypo
-                          name="eye-with-line"
-                          size={32}
-                          color="#1f9117"
-                        />
-                      )}
-                    </TouchableOpacity>
-                  </View>
+                  <TextInput
+                    style={styles.input}
+                    onChangeText={handleChange("senha")}
+                    onBlur={handleBlur("senha")}
+                    value={values.senha}
+                  />
 
                   <Button title="Cadastrar" onPress={handleSubmit} />
                 </View>

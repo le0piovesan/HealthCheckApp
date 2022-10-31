@@ -13,18 +13,19 @@ import {
 } from "react-native";
 import Button from "../components/Button";
 import { Entypo } from "@expo/vector-icons";
-import User from "../services/sqlite/User";
 import { Formik } from "formik";
 import * as yup from "yup";
+import axios from "axios";
 
 const loginSchema = yup.object({
-  user: yup.string().required(),
-  password: yup.string().required(),
+  usuario: yup.string().required(),
+  senha: yup.string().required(),
 });
 
 export default function Login({ navigation }) {
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [errorUser, setErrorUser] = useState(null);
+  const [userList, setUserList] = useState([]);
 
   return (
     <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
@@ -59,22 +60,20 @@ export default function Login({ navigation }) {
           <View style={styles.main}>
             <Formik
               validationSchema={loginSchema}
-              initialValues={{ user: "", password: "" }}
-              onSubmit={async ({ user, password }) => {
+              initialValues={{ usuario: "", senha: "" }}
+              onSubmit={async ({ usuario, senha }) => {
                 try {
-                  const response = await User.findByUserName(user);
-                  const currentUser = response.find((u) => u.user === user);
+                  const response = await axios.get(`pessoa/${usuario}`);
+
                   if (
-                    currentUser.user === user &&
-                    currentUser.password === password
+                    response.data.usuario === usuario &&
+                    response.data.senha === senha
                   ) {
-                    navigation.navigate("Home", {
-                      currentUserName: currentUser.name,
-                      currentUserId: currentUser.id,
-                    });
+                    navigation.navigate("Home");
                     setErrorUser(null);
                   } else setErrorUser("Senha incorreta");
                 } catch (err) {
+                  console.log(err);
                   setErrorUser("Usuário não existe");
                 }
               }}
@@ -90,19 +89,19 @@ export default function Login({ navigation }) {
                 <View>
                   <Text style={styles.inputTitle}>
                     Usuário{" "}
-                    {touched.user && errors.user ? (
+                    {touched.usuario && errors.usuario ? (
                       <Text style={styles.errorText}>* Campo obrigatório</Text>
                     ) : null}
                   </Text>
                   <TextInput
                     style={styles.input}
-                    onChangeText={handleChange("user")}
-                    onBlur={handleBlur("user")}
-                    value={values.user}
+                    onChangeText={handleChange("usuario")}
+                    onBlur={handleBlur("usuario")}
+                    value={values.usuario}
                   />
                   <Text style={styles.inputTitle}>
                     Senha{" "}
-                    {touched.password && errors.password ? (
+                    {touched.senha && errors.senha ? (
                       <Text style={styles.errorText}>* Campo obrigatório</Text>
                     ) : null}
                   </Text>
@@ -115,9 +114,9 @@ export default function Login({ navigation }) {
                     <TextInput
                       style={styles.input}
                       secureTextEntry={passwordVisible ? false : true}
-                      onChangeText={handleChange("password")}
-                      onBlur={handleBlur("password")}
-                      value={values.password}
+                      onChangeText={handleChange("senha")}
+                      onBlur={handleBlur("senha")}
+                      value={values.senha}
                     />
                     <TouchableOpacity
                       onPress={() => setPasswordVisible(!passwordVisible)}

@@ -18,39 +18,38 @@ import {
   FontAwesome5,
 } from "@expo/vector-icons";
 import Consulta from "../services/sqlite/Consulta";
-import User from "../services/sqlite/User";
+// import User from "../services/sqlite/User";
 
 export default function Home({ route, navigation }) {
   const [listConsultas, setListConsultas] = useState([]);
-  const [userData, setUserData] = useState(null);
+  // const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const { currentUserName, currentUserId } = route.params;
 
   useEffect(() => {
-    fetchData();
+    // fetchData();
     setTimeout(() => {
       setLoading(false);
     }, 3000);
   }, []);
 
-  useEffect(() => {
-    const unsubscribe = navigation.addListener("focus", () => {
-      fetchData();
-    });
+  // useEffect(() => {
+  //   const unsubscribe = navigation.addListener("focus", () => {
+  //     fetchData();
+  //   });
 
-    return unsubscribe;
-  }, [navigation]);
+  //   return unsubscribe;
+  // }, [navigation]);
 
-  const fetchData = async () => {
-    try {
-      const response = await Consulta.findConsultasByUserId(currentUserId);
-      const responseUser = await User.find(currentUserId);
-      setListConsultas(response);
-      setUserData(responseUser);
-    } catch (err) {
-      console.log(err);
-    }
-  };
+  // const fetchData = async () => {
+  //   try {
+  //     const response = await Consulta.findConsultasByUserId(currentUserId);
+  //     const responseUser = await User.find(currentUserId);
+  //     setListConsultas(response);
+  //     setUserData(responseUser);
+  //   } catch (err) {
+  //     console.log(err);
+  //   }
+  // };
 
   const handleFavorite = async ({ id, name, date, insurance }) => {
     const response = await Consulta.update(id, {
@@ -58,13 +57,13 @@ export default function Home({ route, navigation }) {
       date,
       insurance: !insurance,
     });
-    fetchData();
+    // fetchData();
   };
 
   const handleDelete = async (id) => {
     const response = await Consulta.remove(id);
     if (listConsultas.length == 1) setListConsultas([]);
-    fetchData();
+    // fetchData();
   };
 
   if (loading) {
@@ -85,14 +84,7 @@ export default function Home({ route, navigation }) {
   return (
     <SafeAreaView style={styles.container}>
       <View>
-        <Text style={styles.title}>
-          Bem vindo,{" "}
-          {currentUserName
-            ? currentUserName
-            : userData && userData.name
-            ? userData.name
-            : "Teste"}
-        </Text>
+        <Text style={styles.title}>Bem vindo</Text>
         <Text style={styles.subtitle}>
           Clique no botão abaixo para agendar uma consulta
         </Text>

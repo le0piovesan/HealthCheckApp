@@ -15,6 +15,8 @@ import { Formik } from "formik";
 import Consulta from "../services/sqlite/Consulta";
 import Checkbox from "expo-checkbox";
 
+import axios from "axios";
+
 export default function ConsultaRegister({ route, navigation }) {
   const { currentUserId } = route.params;
 

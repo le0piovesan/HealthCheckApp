@@ -1,7 +1,10 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { StatusBar } from "expo-status-bar";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import axios from "axios";
+
+axios.defaults.baseURL = "http://192.168.1.7:3210";
 
 // Páginas
 import Login from "./src/views/Login";
