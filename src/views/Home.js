@@ -151,7 +151,7 @@ export default function Home({ route, navigation }) {
               </Text>
             </View>
             <Text style={styles.subtitle}>
-              Clique no botão abaixo para agendar uma consulta
+              {"\n"}Clique no botão abaixo para agendar uma consulta
             </Text>
             <TouchableOpacity
               style={styles.addConsulta}
@@ -174,22 +174,39 @@ export default function Home({ route, navigation }) {
               listAppointments.map((e, idx) => {
                 return (
                   <TouchableOpacity
-                    style={styles.card}
+                    style={{
+                      flex: 1,
+                      width: "100%",
+                      borderWidth: 1,
+                      borderRadius: 5,
+                      flexDirection: "row",
+                      alignItems: "center",
+                      justifyContent: "space-around",
+                      margin: 10,
+                      padding: 10,
+                      borderColor: "#19CEDB",
+                      opacity: e.status === "Cancelada" ? 0.6 : 1,
+                    }}
                     key={e.id}
                     onPress={() => setModalVisible(e)}
                   >
+                    <Image
+                      source={require("../../assets/professional.png")}
+                      resizeMode={"contain"}
+                      style={{
+                        width: 50,
+                        height: 50,
+                        marginRight: 3,
+                      }}
+                    />
                     <View
                       style={{
                         flex: 1,
                       }}
                     >
-                      <Text
-                        style={{
-                          fontWeight: "bold",
-                          fontSize: 18,
-                        }}
-                      >
-                        {e.clinic.corporate_name}
+                      <Text style={{ fontWeight: "bold" }}>
+                        {e.professional.user.name}{" "}
+                        {e.professional.user.last_name}
                       </Text>
 
                       <Text>
@@ -269,6 +286,15 @@ export default function Home({ route, navigation }) {
               </TouchableOpacity>
 
               <Text style={{ textAlign: "center" }}>Detalhes da consulta:</Text>
+              <Image
+                source={require("../../assets/clinic.png")}
+                resizeMode={"contain"}
+                style={{
+                  width: 50,
+                  height: 50,
+                  marginRight: 3,
+                }}
+              />
               <Text style={styles.textDetails}>
                 Nome da clínica:{"\n"}
                 <Text style={{ fontWeight: "bold" }}>
@@ -356,18 +382,6 @@ const styles = StyleSheet.create({
     padding: 10,
     margin: 20,
     alignSelf: "center",
-  },
-  card: {
-    flex: 1,
-    width: "100%",
-    borderWidth: 1,
-    borderRadius: 5,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-around",
-    margin: 10,
-    padding: 10,
-    borderColor: "#19CEDB",
   },
   containerCards: {
     flex: 1,
