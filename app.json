@@ -7,9 +7,9 @@
     "icon": "./assets/logo-hc.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./assets/health-background.jpg",
-      "resizeMode": "cover",
-      "backgroundColor": "#ffffff"
+      "image": "./assets/health-check-logo.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#f7f7f7fff"
     },
     "updates": {
       "fallbackToCacheTimeout": 0
@@ -20,8 +20,8 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/logo-hc.png",
-        "backgroundColor": "#FFFFFF"
+        "foregroundImage": "./assets/health-check-logo.png",
+        "backgroundColor": "#f7f7f7FFF"
       },
       "package": "com.le0piovesan.HealthCheckApp"
     },

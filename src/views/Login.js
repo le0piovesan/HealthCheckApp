@@ -10,6 +10,7 @@ import {
   ScrollView,
   TouchableWithoutFeedback,
   Keyboard,
+  ImageBackground,
 } from "react-native";
 import Button from "../components/Button";
 import { Entypo } from "@expo/vector-icons";
@@ -17,147 +18,183 @@ import { Formik } from "formik";
 import * as yup from "yup";
 import axios from "axios";
 
+const bcrypt = require("bcryptjs");
+
 const loginSchema = yup.object({
-  usuario: yup.string().required(),
-  senha: yup.string().required(),
+  email: yup.string().required(),
+  password: yup.string().required(),
 });
 
 export default function Login({ navigation }) {
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [errorUser, setErrorUser] = useState(null);
-  const [userList, setUserList] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  if (loading) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          backgroundColor: "#f7f7f7",
+        }}
+      >
+        <Image source={require("../../assets/healthcheck-loading1.gif")} />
+      </View>
+    );
+  }
 
   return (
     <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
       <SafeAreaView style={styles.container}>
-        <ScrollView showsVerticalScrollIndicator={false}>
-          <View
-            style={{
-              flex: 1,
-              justifyContent: "center",
-              alignItems: "center",
-            }}
-          >
+        <ImageBackground
+          source={require("../../assets/background-app.png")}
+          style={{
+            flex: 1,
+            width: "100%",
+            padding: 20,
+          }}
+          resizeMode="cover"
+        >
+          <ScrollView showsVerticalScrollIndicator={false}>
             <View
               style={{
+                flex: 1,
+                justifyContent: "center",
                 alignItems: "center",
               }}
             >
-              <Image
-                source={require("../../assets/logo-hc.png")}
-                resizeMode="contain"
+              <View
                 style={{
-                  width: 100,
-                  height: 100,
-                  borderRadius: 20,
+                  alignItems: "center",
                 }}
-              />
+              >
+                <Image
+                  source={require("../../assets/health-check-logo.png")}
+                  resizeMode="contain"
+                  style={{
+                    width: 100,
+                    height: 100,
+                    borderRadius: 20,
+                  }}
+                />
+              </View>
+              <Text style={styles.title}>Health Check</Text>
+              <Text style={styles.subtitle}>Conferindo sua saúde diária!</Text>
             </View>
-            <Text style={styles.title}>Health Check</Text>
-            <Text style={styles.subtitle}>Conferindo sua saúde diária!</Text>
-          </View>
 
-          <View style={styles.main}>
-            <Formik
-              validationSchema={loginSchema}
-              initialValues={{ usuario: "", senha: "" }}
-              onSubmit={async ({ usuario, senha }) => {
-                try {
-                  const response = await axios.get(`pessoa/${usuario}`);
+            <View style={styles.main}>
+              <Formik
+                validationSchema={loginSchema}
+                initialValues={{ email: "", password: "" }}
+                onSubmit={async ({ email, password }) => {
+                  try {
+                    setLoading(true);
+                    const response = await axios.get(`users/email/${email}`);
 
-                  if (
-                    response.data.usuario === usuario &&
-                    response.data.senha === senha
-                  ) {
-                    navigation.navigate("Home");
-                    setErrorUser(null);
-                  } else setErrorUser("Senha incorreta");
-                } catch (err) {
-                  console.log(err);
-                  setErrorUser("Usuário não existe");
-                }
-              }}
-            >
-              {({
-                handleChange,
-                handleBlur,
-                handleSubmit,
-                values,
-                errors,
-                touched,
-              }) => (
-                <View>
-                  <Text style={styles.inputTitle}>
-                    Usuário{" "}
-                    {touched.usuario && errors.usuario ? (
-                      <Text style={styles.errorText}>* Campo obrigatório</Text>
-                    ) : null}
-                  </Text>
-                  <TextInput
-                    style={styles.input}
-                    onChangeText={handleChange("usuario")}
-                    onBlur={handleBlur("usuario")}
-                    value={values.usuario}
-                  />
-                  <Text style={styles.inputTitle}>
-                    Senha{" "}
-                    {touched.senha && errors.senha ? (
-                      <Text style={styles.errorText}>* Campo obrigatório</Text>
-                    ) : null}
-                  </Text>
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      alignItems: "center",
-                    }}
-                  >
+                    const { password_hash, id } = response.data;
+
+                    if (await bcrypt.compareSync(password, password_hash)) {
+                      navigation.navigate("Home", { currentUserId: id });
+                      setErrorUser(null);
+                      setLoading(false);
+                    } else {
+                      setErrorUser("Senha incorreta");
+                      setLoading(false);
+                    }
+                  } catch (err) {
+                    console.log(err);
+                    setErrorUser("Usuário não existe");
+                    setLoading(false);
+                  }
+                }}
+              >
+                {({
+                  handleChange,
+                  handleBlur,
+                  handleSubmit,
+                  values,
+                  errors,
+                  touched,
+                }) => (
+                  <View>
+                    <Text style={styles.inputTitle}>
+                      E-mail{" "}
+                      {touched.email && errors.email ? (
+                        <Text style={styles.errorText}>
+                          * Campo obrigatório
+                        </Text>
+                      ) : null}
+                    </Text>
                     <TextInput
                       style={styles.input}
-                      secureTextEntry={passwordVisible ? false : true}
-                      onChangeText={handleChange("senha")}
-                      onBlur={handleBlur("senha")}
-                      value={values.senha}
+                      onChangeText={handleChange("email")}
+                      onBlur={handleBlur("email")}
+                      value={values.email}
                     />
-                    <TouchableOpacity
-                      onPress={() => setPasswordVisible(!passwordVisible)}
-                    >
-                      {passwordVisible ? (
-                        <Entypo name="eye" size={32} color="#1f9117" />
-                      ) : (
-                        <Entypo
-                          name="eye-with-line"
-                          size={32}
-                          color="#1f9117"
-                        />
-                      )}
-                    </TouchableOpacity>
-                  </View>
-                  {errorUser && (
-                    <Text
+                    <Text style={styles.inputTitle}>
+                      Senha{" "}
+                      {touched.password && errors.password ? (
+                        <Text style={styles.errorText}>
+                          * Campo obrigatório
+                        </Text>
+                      ) : null}
+                    </Text>
+                    <View
                       style={{
-                        fontSize: 20,
-                        color: "red",
-                        textAlign: "center",
+                        flexDirection: "row",
+                        alignItems: "center",
                       }}
                     >
-                      {errorUser}
-                    </Text>
-                  )}
-                  <Button title="Entrar" onPress={handleSubmit} />
+                      <TextInput
+                        style={styles.input}
+                        secureTextEntry={passwordVisible ? false : true}
+                        onChangeText={handleChange("password")}
+                        onBlur={handleBlur("password")}
+                        value={values.password}
+                      />
+                      <TouchableOpacity
+                        onPress={() => setPasswordVisible(!passwordVisible)}
+                      >
+                        {passwordVisible ? (
+                          <Entypo name="eye" size={32} color="#19CEDB" />
+                        ) : (
+                          <Entypo
+                            name="eye-with-line"
+                            size={32}
+                            color="#19CEDB"
+                          />
+                        )}
+                      </TouchableOpacity>
+                    </View>
+                    {errorUser && (
+                      <Text
+                        style={{
+                          fontSize: 20,
+                          color: "red",
+                          textAlign: "center",
+                        }}
+                      >
+                        {errorUser}
+                      </Text>
+                    )}
+                    <Button title="Entrar" onPress={handleSubmit} />
 
-                  <Text style={{ textAlign: "center" }}>
-                    Não possui uma conta?
-                  </Text>
-                  <Button
-                    title="Cadastre-se"
-                    outline={true}
-                    onPress={() => navigation.navigate("Register")}
-                  />
-                </View>
-              )}
-            </Formik>
-          </View>
-        </ScrollView>
+                    <Text style={{ textAlign: "center" }}>
+                      Não possui uma conta?
+                    </Text>
+                    <Button
+                      title="Cadastre-se"
+                      outline={true}
+                      onPress={() => navigation.navigate("Register")}
+                    />
+                  </View>
+                )}
+              </Formik>
+            </View>
+          </ScrollView>
+        </ImageBackground>
       </SafeAreaView>
     </TouchableWithoutFeedback>
   );
@@ -166,8 +203,7 @@ export default function Login({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
-    padding: 20,
+    backgroundColor: "#f7f7f7",
   },
   title: {
     fontWeight: "bold",
@@ -175,7 +211,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   subtitle: {
-    color: "#1f9117",
+    color: "#19CEDB",
     fontSize: 18,
     textAlign: "center",
   },

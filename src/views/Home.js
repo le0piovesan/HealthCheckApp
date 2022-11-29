@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import {
   StyleSheet,
-  TextInput,
+  Alert,
   SafeAreaView,
   Text,
   View,
@@ -9,129 +9,210 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Image,
+  ImageBackground,
+  Modal,
 } from "react-native";
+import Button from "../components/Button";
+
+import { format } from "date-fns";
 
 import {
   Ionicons,
-  AntDesign,
-  FontAwesome,
+  MaterialCommunityIcons,
   FontAwesome5,
 } from "@expo/vector-icons";
-import Consulta from "../services/sqlite/Consulta";
-// import User from "../services/sqlite/User";
+
+import axios from "axios";
 
 export default function Home({ route, navigation }) {
-  const [listConsultas, setListConsultas] = useState([]);
-  // const [userData, setUserData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { currentUserId } = route.params;
+
+  const [listAppointments, setListAppointments] = useState([]);
+  const [clientData, setClientData] = useState(null);
+  const [modalVisible, setModalVisible] = useState(null);
 
   useEffect(() => {
-    // fetchData();
-    setTimeout(() => {
-      setLoading(false);
-    }, 3000);
+    fetchData();
   }, []);
 
-  // useEffect(() => {
-  //   const unsubscribe = navigation.addListener("focus", () => {
-  //     fetchData();
+  useEffect(() => {
+    const unsubscribe = navigation.addListener("focus", () => {
+      fetchData();
+    });
+
+    return unsubscribe;
+  }, [navigation]);
+
+  const fetchData = async () => {
+    try {
+      const responseClient = await axios.get(`clients/user/${currentUserId}`);
+      setClientData(responseClient.data);
+      if (responseClient.data.id) {
+        try {
+          const responseAppointments = await axios.get(
+            `appointments/clients/${responseClient.data.id}`
+          );
+          setListAppointments(responseAppointments.data);
+        } catch (error) {
+          console.log(error);
+        }
+      }
+    } catch (err) {
+      console.log(err);
+      setClientData("NOT_CLIENT");
+    }
+  };
+
+  // const handleFavorite = async ({ id, name, date, insurance }) => {
+  //   const response = await Consulta.update(id, {
+  //     name,
+  //     date,
+  //     insurance: !insurance,
   //   });
-
-  //   return unsubscribe;
-  // }, [navigation]);
-
-  // const fetchData = async () => {
-  //   try {
-  //     const response = await Consulta.findConsultasByUserId(currentUserId);
-  //     const responseUser = await User.find(currentUserId);
-  //     setListConsultas(response);
-  //     setUserData(responseUser);
-  //   } catch (err) {
-  //     console.log(err);
-  //   }
+  //   // fetchData();
   // };
 
-  const handleFavorite = async ({ id, name, date, insurance }) => {
-    const response = await Consulta.update(id, {
-      name,
-      date,
-      insurance: !insurance,
-    });
-    // fetchData();
-  };
-
-  const handleDelete = async (id) => {
-    const response = await Consulta.remove(id);
-    if (listConsultas.length == 1) setListConsultas([]);
-    // fetchData();
-  };
-
-  if (loading) {
-    return (
-      <View
-        style={{
-          flex: 1,
-          justifyContent: "center",
-          alignItems: "center",
-          backgroundColor: "#fff",
-        }}
-      >
-        <Image source={require("../../assets/splash-hc.gif")} />
-      </View>
+  const cancelarConsulta = (id) => {
+    Alert.alert(
+      "Health Check",
+      "Tem certeza que deseja cancelar a consulta?",
+      [
+        {
+          text: "Sim",
+          onPress: async () => {
+            try {
+              const response = await axios.patch(`appointments/${id}`, {
+                status: "Cancelada",
+              });
+              console.log(response.data);
+              setModalVisible(null);
+              await fetchData();
+            } catch (error) {
+              console.log(error);
+            }
+          },
+        },
+        {
+          text: "Voltar",
+        },
+      ],
+      { cancelable: false }
     );
-  }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
-      <View>
-        <Text style={styles.title}>Bem vindo</Text>
-        <Text style={styles.subtitle}>
-          Clique no botão abaixo para agendar uma consulta
-        </Text>
-        <TouchableOpacity
-          style={styles.addConsulta}
-          onPress={() =>
-            navigation.navigate("ConsultaRegister", {
-              currentUserId: currentUserId,
-            })
-          }
-        >
-          <FontAwesome5 name="clipboard-list" size={24} color="#fff" />
-          <Text style={{ color: "#fff", fontSize: 18 }}> Agendar +</Text>
-        </TouchableOpacity>
-      </View>
-      <ScrollView>
-        <View style={styles.containerCards}>
-          {listConsultas && listConsultas.length > 0 ? (
-            listConsultas.map((e, idx) => {
-              return (
-                <View style={styles.card} key={e.id}>
-                  <View
-                    style={{
-                      flex: 1,
-                    }}
+      <ImageBackground
+        source={require("../../assets/background-app.png")}
+        style={{
+          flex: 1,
+          width: "100%",
+          padding: 20,
+        }}
+        resizeMode="cover"
+      >
+        {clientData === "NOT_CLIENT" ? (
+          <View>
+            <Text style={styles.title}>Bem vindo</Text>
+            <Text style={styles.subtitle}>
+              Para começar a agendar consultas é necessário finalizar seu
+              cadastro, precisamos de mais alguns dados
+            </Text>
+            <Button
+              title="Finalizar cadastro de cliente"
+              onPress={() =>
+                navigation.navigate("ClienteRegister", {
+                  currentUserId: currentUserId,
+                })
+              }
+            />
+          </View>
+        ) : (
+          <View>
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+              }}
+            >
+              <Image
+                source={require("../../assets/client.png")}
+                resizeMode={"contain"}
+                style={{
+                  width: 50,
+                  height: 50,
+                }}
+              />
+              <Text style={styles.title}>
+                {" "}
+                {clientData &&
+                  clientData.user.name[0].toUpperCase() +
+                    clientData.user.name.substring(1)}
+              </Text>
+            </View>
+            <Text style={styles.subtitle}>
+              Clique no botão abaixo para agendar uma consulta
+            </Text>
+            <TouchableOpacity
+              style={styles.addConsulta}
+              onPress={() =>
+                navigation.navigate("ConsultaRegister", {
+                  currentClientId: clientData.id,
+                  currentUserId: currentUserId,
+                })
+              }
+            >
+              <FontAwesome5 name="clipboard-list" size={24} color="#f7f7f7" />
+              <Text style={{ color: "#f7f7f7", fontSize: 18 }}> Agendar +</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        <ScrollView>
+          <View style={styles.containerCards}>
+            {listAppointments && listAppointments.length > 0 ? (
+              listAppointments.map((e, idx) => {
+                return (
+                  <TouchableOpacity
+                    style={styles.card}
+                    key={e.id}
+                    onPress={() => setModalVisible(e)}
                   >
-                    <Text
+                    <View
                       style={{
-                        fontWeight: "bold",
-                        fontSize: 20,
+                        flex: 1,
                       }}
                     >
-                      {e.name}
-                    </Text>
-                    <Text>Data: {e.date}</Text>
-                  </View>
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      alignItems: "center",
-                    }}
-                  >
+                      <Text
+                        style={{
+                          fontWeight: "bold",
+                          fontSize: 18,
+                        }}
+                      >
+                        {e.clinic.corporate_name}
+                      </Text>
+
+                      <Text>
+                        Data da consulta:{" "}
+                        <Text style={{ fontWeight: "bold" }}>
+                          {format(new Date(e.appointment_date), "dd/MM/yyyy", {
+                            timeZone: "America/Sao_Paulo",
+                          })}
+                        </Text>
+                      </Text>
+                    </View>
+
                     <TouchableOpacity
-                      style={{ paddingHorizontal: 8 }}
-                      onPress={() => handleFavorite(e)}
+                      style={{
+                        paddingHorizontal: 8,
+                        alignItems: "center",
+                        opacity: e.status !== "Pendente" ? 0.2 : 1,
+                      }}
+                      disabled={e.status !== "Pendente"}
+
+                      // onPress={() => handleFavorite(e)}
                     >
-                      {e.insurance ? (
+                      {e.status === "Pendente" ? (
                         <Ionicons
                           name="notifications"
                           size={24}
@@ -144,31 +225,107 @@ export default function Home({ route, navigation }) {
                           color="black"
                         />
                       )}
-                    </TouchableOpacity>
 
-                    <TouchableOpacity
-                      style={{ paddingHorizontal: 8 }}
-                      onPress={() => handleDelete(e.id)}
-                    >
-                      <FontAwesome name="trash" size={28} color="#9c2442" />
+                      <Text style={{ textAlign: "center" }}>
+                        Consulta{"\n"}
+                        {e.status}
+                      </Text>
                     </TouchableOpacity>
-                  </View>
-                </View>
-              );
-            })
-          ) : (
-            <View>
-              <Text
-                style={{
-                  fontSize: 20,
-                }}
+                  </TouchableOpacity>
+                );
+              })
+            ) : (
+              <View>
+                <Text
+                  style={{
+                    fontSize: 20,
+                  }}
+                >
+                  Nenhuma consulta agendada.
+                </Text>
+              </View>
+            )}
+          </View>
+        </ScrollView>
+
+        {modalVisible && (
+          <Modal
+            animationType="slide"
+            transparent={true}
+            visible={modalVisible ? true : false}
+            onRequestClose={() => setModalVisible(null)}
+          >
+            <View style={styles.modalView}>
+              <TouchableOpacity
+                onPress={() => setModalVisible(null)}
+                hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+                style={{ alignSelf: "center" }}
               >
-                Nenhuma consulta agendada.
+                <MaterialCommunityIcons
+                  name="chevron-down"
+                  size={25}
+                  color="#000"
+                />
+              </TouchableOpacity>
+
+              <Text style={{ textAlign: "center" }}>Detalhes da consulta:</Text>
+              <Text style={styles.textDetails}>
+                Nome da clínica:{"\n"}
+                <Text style={{ fontWeight: "bold" }}>
+                  {modalVisible.clinic.corporate_name}
+                </Text>
               </Text>
+              <Text style={styles.textDetails}>
+                Data da consulta:{"\n"}
+                <Text style={{ fontWeight: "bold" }}>
+                  {format(
+                    new Date(modalVisible.appointment_date),
+                    "dd/MM/yyyy",
+                    {
+                      timeZone: "America/Sao_Paulo",
+                    }
+                  )}
+                </Text>
+              </Text>
+              <Text style={styles.textDetails}>
+                Profissional que irá realizar a consulta:{"\n"}
+                <Text style={{ fontWeight: "bold" }}>
+                  {modalVisible.professional.user.name}{" "}
+                  {modalVisible.professional.user.last_name}
+                </Text>
+              </Text>
+
+              <Text style={styles.textDetails}>
+                Convênio:{"\n"}
+                <Text style={{ fontWeight: "bold" }}>
+                  {modalVisible.clinic.health_insurance
+                    ? modalVisible.clinic.health_insurance
+                    : "Particular"}
+                </Text>
+              </Text>
+
+              <TouchableOpacity
+                style={{
+                  paddingHorizontal: 8,
+                  alignItems: "center",
+                  opacity: modalVisible.status !== "Pendente" ? 0.2 : 1,
+                }}
+                disabled={modalVisible.status !== "Pendente"}
+                onPress={() => cancelarConsulta(modalVisible.id)}
+              >
+                <MaterialCommunityIcons
+                  name="book-cancel"
+                  size={24}
+                  color="#9c2432"
+                />
+                <Text style={{ textAlign: "center" }}>
+                  Não Posso{"\n"}Comparecer
+                </Text>
+              </TouchableOpacity>
             </View>
-          )}
-        </View>
-      </ScrollView>
+          </Modal>
+        )}
+      </ImageBackground>
     </SafeAreaView>
   );
 }
@@ -176,18 +333,16 @@ export default function Home({ route, navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: "#f7f7f7",
     alignItems: "center",
-    paddingTop: 20,
   },
   title: {
     fontWeight: "bold",
-    fontSize: 24,
+    fontSize: 22,
     textAlign: "center",
   },
   subtitle: {
-    color: "#1f9117",
-    fontSize: 18,
+    fontSize: 16,
     textAlign: "center",
   },
   addConsulta: {
@@ -195,7 +350,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     borderWidth: 2,
-    borderRadius: 100,
+    borderRadius: 20,
     borderColor: "#178791",
     backgroundColor: "#178791",
     padding: 10,
@@ -204,7 +359,7 @@ const styles = StyleSheet.create({
   },
   card: {
     flex: 1,
-    width: "80%",
+    width: "100%",
     borderWidth: 1,
     borderRadius: 5,
     flexDirection: "row",
@@ -212,11 +367,22 @@ const styles = StyleSheet.create({
     justifyContent: "space-around",
     margin: 10,
     padding: 10,
-    borderColor: "#1f9117",
+    borderColor: "#19CEDB",
   },
   containerCards: {
     flex: 1,
     padding: 10,
     alignItems: "center",
+  },
+  modalView: {
+    flex: 1,
+    elevation: 5,
+    borderRadius: 5,
+    padding: 16,
+    backgroundColor: "#fff",
+  },
+  textDetails: {
+    fontSize: 18,
+    paddingVertical: 5,
   },
 });

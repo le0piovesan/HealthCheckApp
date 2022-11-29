@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { StatusBar } from "expo-status-bar";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
@@ -6,11 +6,18 @@ import axios from "axios";
 
 axios.defaults.baseURL = "http://192.168.1.7:3210";
 
+// axios.defaults.baseURL = "http://192.168.116.17:3210";
+
+// axios.defaults.baseURL = "http://192.168.10.146:3210";
+
+process.env.LANG = "pt-BR.utf8";
+
 // Páginas
 import Login from "./src/views/Login";
 import Register from "./src/views/Register";
 import Home from "./src/views/Home";
 import ConsultaRegister from "./src/views/ConsultaRegister";
+import ClienteRegister from "./src/views/ClienteRegister";
 
 const Stack = createNativeStackNavigator();
 
@@ -25,9 +32,9 @@ export default function App() {
             options={{
               title: "Login",
               headerStyle: {
-                backgroundColor: "#1f9117",
+                backgroundColor: "#19CEDB",
               },
-              headerTintColor: "#fff",
+              headerTintColor: "#f7f7f7",
               headerTitleStyle: {
                 fontWeight: "bold",
               },
@@ -39,9 +46,9 @@ export default function App() {
             options={{
               title: "Se Registrar",
               headerStyle: {
-                backgroundColor: "#1f9117",
+                backgroundColor: "#19CEDB",
               },
-              headerTintColor: "#fff",
+              headerTintColor: "#f7f7f7",
               headerTitleStyle: {
                 fontWeight: "bold",
               },
@@ -53,9 +60,9 @@ export default function App() {
             options={{
               title: "Minha Agenda",
               headerStyle: {
-                backgroundColor: "#1f9117",
+                backgroundColor: "#19CEDB",
               },
-              headerTintColor: "#fff",
+              headerTintColor: "#f7f7f7",
               headerTitleStyle: {
                 fontWeight: "bold",
               },
@@ -67,9 +74,23 @@ export default function App() {
             options={{
               title: "Nova Consulta",
               headerStyle: {
-                backgroundColor: "#1f9117",
+                backgroundColor: "#19CEDB",
               },
-              headerTintColor: "#fff",
+              headerTintColor: "#f7f7f7",
+              headerTitleStyle: {
+                fontWeight: "bold",
+              },
+            }}
+          />
+          <Stack.Screen
+            name="ClienteRegister"
+            component={ClienteRegister}
+            options={{
+              title: "Finalizar Cadastro",
+              headerStyle: {
+                backgroundColor: "#19CEDB",
+              },
+              headerTintColor: "#f7f7f7",
               headerTitleStyle: {
                 fontWeight: "bold",
               },

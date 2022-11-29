@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   StyleSheet,
-  TextInput,
+  Image,
   SafeAreaView,
   Text,
   View,
@@ -9,92 +9,319 @@ import {
   TouchableOpacity,
   TouchableWithoutFeedback,
   Keyboard,
+  ImageBackground,
 } from "react-native";
 import Button from "../components/Button";
 import { Formik } from "formik";
-import Consulta from "../services/sqlite/Consulta";
+import { Picker } from "@react-native-picker/picker";
 import Checkbox from "expo-checkbox";
+import * as yup from "yup";
+import DateTimePicker from "@react-native-community/datetimepicker";
 
 import axios from "axios";
+import { format } from "date-fns";
+
+const registerSchema = yup.object({
+  appointment_date: yup.date().required(),
+  isReturn: yup.boolean().required(),
+  status: yup.string().required(),
+  professional_id: yup.number().required(),
+  clinic_id: yup.number().required(),
+  client_id: yup.number().required(),
+});
 
 export default function ConsultaRegister({ route, navigation }) {
-  const { currentUserId } = route.params;
+  const { currentClientId, currentUserId } = route.params;
+
+  const [status, setStatus] = useState("Pendente");
+  const [listSpecialties, setListSpecialties] = useState([]);
+  const [specialtie, setSpecialtie] = useState(null);
+  const [listProfessionals, setListProfessionals] = useState([]);
+  const [professional, setProfessional] = useState(null);
+  const [listClinics, setListClinics] = useState([]);
+  const [clinic, setClinic] = useState(null);
+  const [date, setDate] = useState(new Date());
+  const [show, setShow] = useState(false);
+
+  useEffect(() => {
+    getSpecialties();
+  }, []);
+
+  const getSpecialties = async () => {
+    try {
+      const response = await axios.get("specialties");
+
+      setListSpecialties(response.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const getProfessionalSpecialtie = async (specialty_id) => {
+    try {
+      const response = await axios.get(
+        `professional_specialties/specialty/${specialty_id}`
+      );
+      setListProfessionals(response.data);
+      await getClinicas();
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const getClinicas = async () => {
+    try {
+      const response = await axios.get("clinics");
+      setListClinics(response.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const onChange = (event, selectedDate) => {
+    const currentDate = selectedDate;
+    setShow(false);
+    setDate(currentDate);
+  };
+
+  const ref = useRef(null);
+
+  const someFuncton = () => {
+    console.log(ref.current.values);
+  };
 
   return (
     <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
       <SafeAreaView style={styles.container}>
-        <ScrollView showsVerticalScrollIndicator={false}>
-          <View>
-            <Text style={styles.subtitle}>
-              Cadastre abaixo o tipo de consulta que procura:
-            </Text>
-          </View>
+        <ImageBackground
+          source={require("../../assets/background-app.png")}
+          style={{
+            flex: 1,
+            width: "100%",
+            padding: 20,
+          }}
+          resizeMode="cover"
+        >
+          <ScrollView showsVerticalScrollIndicator={false}>
+            <View style={styles.main}>
+              <Formik
+                innerRef={ref}
+                validationSchema={registerSchema}
+                initialValues={{
+                  appointment_date: date,
+                  isReturn: false,
+                  status: "Pendente",
+                  professional_id: "",
+                  clinic_id: "",
+                  client_id: currentClientId,
+                }}
+                onSubmit={({ isReturn }) => {
+                  if (specialtie != null && listProfessionals.length > 0) {
+                    try {
+                      const response = axios.post("appointments", {
+                        appointment_date: date,
+                        return: isReturn,
+                        status: status,
+                        professional_id: professional,
+                        clinic_id: clinic,
+                        client_id: currentClientId,
+                      });
 
-          <View style={styles.main}>
-            <Formik
-              initialValues={{ name: "", date: "", insurance: false }}
-              onSubmit={({ name, date, insurance }) => {
-                Consulta.create({
-                  name,
-                  date,
-                  insurance,
-                  userReference: currentUserId,
-                })
-                  .then((id) => {
-                    console.log("Consulta created with id: " + id);
-                    navigation.navigate("Home", {
-                      currentUserId: currentUserId,
-                    });
-                  })
-                  .catch((err) => console.log(err));
-              }}
-            >
-              {({
-                handleChange,
-                handleBlur,
-                handleSubmit,
-                values,
-                setFieldValue,
-              }) => (
-                <View>
-                  <Text style={styles.inputTitle}>Especialidade:</Text>
-                  <TextInput
-                    style={styles.input}
-                    onChangeText={handleChange("name")}
-                    onBlur={handleBlur("name")}
-                    value={values.name}
-                  />
+                      navigation.navigate("Home", {
+                        currentUserId: currentUserId,
+                      });
+                    } catch (err) {
+                      console.log(err);
+                    }
+                  }
+                }}
+              >
+                {({
+                  handleChange,
+                  handleBlur,
+                  handleSubmit,
+                  setFieldValue,
+                  values,
+                  errors,
+                  touched,
+                }) => (
+                  <View>
+                    <TouchableOpacity
+                      onPress={() => setShow(true)}
+                      style={styles.containerInput}
+                    >
+                      <Text
+                        style={{
+                          color: "#19CEDB",
+                          paddingVertical: 10,
+                          fontSize: 18,
+                        }}
+                      >
+                        📆 Escolher data da consulta
+                      </Text>
+                      <Text>
+                        {format(new Date(date), "dd/MM/yyyy", {
+                          timeZone: "America/Sao_Paulo",
+                        })}
+                      </Text>
+                    </TouchableOpacity>
 
-                  <Text style={styles.inputTitle}>Data desejada:</Text>
-                  <TextInput
-                    style={styles.input}
-                    onChangeText={handleChange("date")}
-                    onBlur={handleBlur("date")}
-                    value={values.date}
-                    keyboardType="numeric"
-                  />
+                    {show && (
+                      <DateTimePicker
+                        testID="dateTimePicker"
+                        value={date}
+                        mode={"date"}
+                        is24Hour={true}
+                        onChange={onChange}
+                      />
+                    )}
 
-                  <View style={styles.section}>
-                    <Text style={styles.inputTitle}>
-                      Possui plano de saúde?
-                    </Text>
+                    <View style={styles.containerInput}>
+                      <View style={styles.section}>
+                        <Text style={styles.inputTitle}>Retorno?</Text>
 
-                    <Checkbox
-                      color="#1f9117"
-                      style={styles.checkbox}
-                      value={values.insurance}
-                      onValueChange={(nextValue) =>
-                        setFieldValue("insurance", nextValue)
-                      }
-                    />
+                        <Checkbox
+                          color="#19CEDB"
+                          style={styles.checkbox}
+                          value={values.isReturn}
+                          onValueChange={(nextValue) =>
+                            setFieldValue("isReturn", nextValue)
+                          }
+                        />
+                      </View>
+                    </View>
+
+                    <View style={styles.containerInput}>
+                      <Text style={styles.inputTitle}>Status:</Text>
+                      <Picker
+                        style={{
+                          height: 40,
+                        }}
+                        selectedValue={status}
+                        onValueChange={(itemValue, itemIndex) => {
+                          setStatus(itemValue);
+                          setFieldValue("status", itemValue);
+                        }}
+                      >
+                        <Picker.Item label="Pendente" value="Pendente" />
+                        <Picker.Item label="Concluída" value="Concluída" />
+                        <Picker.Item label="Cancelada" value="Cancelada" />
+                      </Picker>
+                    </View>
+
+                    <View style={styles.containerInput}>
+                      <Text style={styles.inputTitle}>Especialdade:</Text>
+                      <Picker
+                        style={{
+                          height: 40,
+                        }}
+                        selectedValue={specialtie}
+                        onValueChange={(itemValue, itemIndex) => {
+                          setSpecialtie(itemValue);
+                          getProfessionalSpecialtie(itemValue);
+                        }}
+                      >
+                        <Picker.Item
+                          key=""
+                          label="-- Selecione --"
+                          value={null}
+                          enabled={false}
+                        />
+                        {listSpecialties.map((esp) => {
+                          return (
+                            <Picker.Item
+                              key={esp.id}
+                              label={esp.description}
+                              value={esp.id}
+                            />
+                          );
+                        })}
+                      </Picker>
+                    </View>
+
+                    {specialtie != null && listProfessionals.length === 0 && (
+                      <Text
+                        style={{
+                          textAlign: "center",
+                          color: "crimson",
+                        }}
+                      >
+                        Não foi encontrado nenhum profissional para a
+                        especialidade selecionada
+                      </Text>
+                    )}
+
+                    {listProfessionals.length > 0 && (
+                      <>
+                        <View style={styles.containerInput}>
+                          <Text style={styles.inputTitle}>Clínica:</Text>
+                          <Picker
+                            style={{
+                              height: 40,
+                            }}
+                            selectedValue={clinic}
+                            onValueChange={(itemValue, itemIndex) => {
+                              setClinic(itemValue);
+                              setFieldValue("clinic_id", itemValue);
+                            }}
+                          >
+                            <Picker.Item
+                              key=""
+                              label="-- Selecione --"
+                              value={null}
+                              enabled={false}
+                            />
+                            {listClinics.map((cli) => {
+                              return (
+                                <Picker.Item
+                                  key={cli.id}
+                                  label={cli.corporate_name}
+                                  value={cli.id}
+                                />
+                              );
+                            })}
+                          </Picker>
+                        </View>
+
+                        <View style={styles.containerInput}>
+                          <Text style={styles.inputTitle}>Profissional:</Text>
+                          <Picker
+                            style={{
+                              height: 40,
+                            }}
+                            selectedValue={professional}
+                            onValueChange={(itemValue, itemIndex) => {
+                              setProfessional(itemValue);
+                              setFieldValue("professional_id", itemValue);
+                            }}
+                          >
+                            <Picker.Item
+                              key=""
+                              label="-- Selecione --"
+                              value={null}
+                              enabled={false}
+                            />
+                            {listProfessionals.map((pro) => {
+                              return (
+                                <Picker.Item
+                                  key={pro.professional_id}
+                                  label={`${pro.professional.user.name} ${pro.professional.user.last_name}`}
+                                  value={pro.professional_id}
+                                />
+                              );
+                            })}
+                          </Picker>
+                        </View>
+                      </>
+                    )}
+
+                    <Button title="Cadastrar" onPress={handleSubmit} />
                   </View>
-
-                  <Button title="Cadastrar" onPress={handleSubmit} />
-                </View>
-              )}
-            </Formik>
-          </View>
-        </ScrollView>
+                )}
+              </Formik>
+            </View>
+          </ScrollView>
+        </ImageBackground>
       </SafeAreaView>
     </TouchableWithoutFeedback>
   );
@@ -104,7 +331,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
-    padding: 20,
   },
   title: {
     fontWeight: "bold",
@@ -112,8 +338,9 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   subtitle: {
-    color: "#1f9117",
+    color: "#19CEDB",
     fontSize: 18,
+    textAlign: "center",
   },
   main: {
     flex: 1,
@@ -135,9 +362,17 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   checkbox: {
-    margin: 15,
+    margin: 5,
     height: 30,
     width: 30,
     borderRadius: 20,
+  },
+  containerInput: {
+    borderWidth: 1,
+    padding: 10,
+    margin: 3,
+    width: "100%",
+    borderRadius: 20,
+    borderColor: "#19CEDB",
   },
 });

@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   TouchableWithoutFeedback,
   Keyboard,
+  ImageBackground,
 } from "react-native";
 import Button from "../components/Button";
 import { Formik } from "formik";
@@ -18,150 +19,164 @@ import axios from "axios";
 import DateTimePicker from "@react-native-community/datetimepicker";
 
 const registerSchema = yup.object({
-  nome: yup.string().required(),
-  usuario: yup.string().required(),
-  cpf: yup.string().required(),
-  celular: yup.string().required(),
+  name: yup.string().required(),
+  last_name: yup.string().required(),
   email: yup.string().required(),
-  senha: yup.string().required(),
+  password: yup.string().required(),
+  phone: yup.string().required(),
 });
 
 export default function Register({ navigation }) {
-  const [date, setDate] = useState(new Date());
-  const [show, setShow] = useState(false);
+  // const [date, setDate] = useState(new Date());
+  // const [show, setShow] = useState(false);
 
-  const onChange = (event, selectedDate) => {
-    const currentDate = selectedDate;
-    setShow(false);
-    setDate(currentDate);
-  };
+  // const onChange = (event, selectedDate) => {
+  //   const currentDate = selectedDate;
+  //   setShow(false);
+  //   setDate(currentDate);
+  // };
 
   return (
     <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
       <SafeAreaView style={styles.container}>
-        <ScrollView showsVerticalScrollIndicator={false}>
-          <View>
-            <Text style={styles.subtitle}>
-              Criar uma conta é fácil e rápido!
-            </Text>
-          </View>
+        <ImageBackground
+          source={require("../../assets/background-app.png")}
+          style={{
+            flex: 1,
+            width: "100%",
+            padding: 20,
+          }}
+          resizeMode="cover"
+        >
+          <ScrollView showsVerticalScrollIndicator={false}>
+            <View>
+              <Text style={styles.subtitle}>
+                Criar uma conta é fácil e rápido!
+              </Text>
+            </View>
 
-          <View style={styles.main}>
-            <Formik
-              validationSchema={registerSchema}
-              initialValues={{
-                nome: "",
-                usuario: "",
-                cpf: "",
-                celular: "",
-                email: "",
-                senha: "",
-              }}
-              onSubmit={async ({
-                nome,
-                usuario,
-                cpf,
-                celular,
-                email,
-                senha,
-              }) => {
-                try {
-                  const response = await axios.post("pessoa", {
-                    nome,
-                    usuario,
-                    cpf,
-                    celular,
-                    email,
-                    senha,
-                    data_nascimento: date,
-                  });
-                  navigation.navigate("Login");
-                } catch (err) {
-                  console.log(err);
-                }
-              }}
-            >
-              {({
-                handleChange,
-                handleBlur,
-                handleSubmit,
-                values,
-                errors,
-                touched,
-              }) => (
-                <View>
-                  <Text style={styles.inputTitle}>
-                    Nome{" "}
-                    {touched.nome && errors.nome ? (
-                      <Text style={styles.errorText}>* Campo obrigatório</Text>
-                    ) : null}
-                  </Text>
-                  <TextInput
-                    style={styles.input}
-                    onChangeText={handleChange("nome")}
-                    onBlur={handleBlur("nome")}
-                    value={values.nome}
-                  />
+            <View style={styles.main}>
+              <Formik
+                validationSchema={registerSchema}
+                initialValues={{
+                  name: "",
+                  last_name: "",
+                  email: "",
+                  password: "",
+                  phone: "",
+                }}
+                onSubmit={async ({
+                  name,
+                  last_name,
+                  email,
+                  password,
+                  phone,
+                }) => {
+                  try {
+                    const response = await axios.post("users", {
+                      name,
+                      last_name,
+                      email,
+                      password,
+                      phone,
+                    });
+                    navigation.navigate("Login");
+                  } catch (err) {
+                    console.log(err);
+                  }
+                }}
+              >
+                {({
+                  handleChange,
+                  handleBlur,
+                  handleSubmit,
+                  values,
+                  errors,
+                  touched,
+                }) => (
+                  <View>
+                    <Text style={styles.inputTitle}>
+                      Nome{" "}
+                      {touched.name && errors.name ? (
+                        <Text style={styles.errorText}>
+                          * Campo obrigatório
+                        </Text>
+                      ) : null}
+                    </Text>
+                    <TextInput
+                      style={styles.input}
+                      onChangeText={handleChange("name")}
+                      onBlur={handleBlur("name")}
+                      value={values.name}
+                    />
 
-                  <Text style={styles.inputTitle}>
-                    Usuário{" "}
-                    {touched.usuario && errors.usuario ? (
-                      <Text style={styles.errorText}>* Campo obrigatório</Text>
-                    ) : null}
-                  </Text>
-                  <TextInput
-                    style={styles.input}
-                    onChangeText={handleChange("usuario")}
-                    onBlur={handleBlur("usuario")}
-                    value={values.usuario}
-                  />
+                    <Text style={styles.inputTitle}>
+                      Sobrenome{" "}
+                      {touched.last_name && errors.last_name ? (
+                        <Text style={styles.errorText}>
+                          * Campo obrigatório
+                        </Text>
+                      ) : null}
+                    </Text>
+                    <TextInput
+                      style={styles.input}
+                      onChangeText={handleChange("last_name")}
+                      onBlur={handleBlur("last_name")}
+                      value={values.last_name}
+                    />
 
-                  <Text style={styles.inputTitle}>
-                    CPF
-                    {touched.cpf && errors.cpf ? (
-                      <Text style={styles.errorText}>* Campo obrigatório</Text>
-                    ) : null}
-                  </Text>
-                  <TextInput
-                    style={styles.input}
-                    onChangeText={handleChange("cpf")}
-                    onBlur={handleBlur("cpf")}
-                    value={values.cpf}
-                    keyboardType="numeric"
-                  />
+                    <Text style={styles.inputTitle}>
+                      E-mail
+                      {touched.email && errors.email ? (
+                        <Text style={styles.errorText}>
+                          * Campo obrigatório
+                        </Text>
+                      ) : null}
+                    </Text>
+                    <TextInput
+                      style={styles.input}
+                      onChangeText={handleChange("email")}
+                      onBlur={handleBlur("email")}
+                      value={values.email}
+                      keyboardType={"email-address"}
+                    />
 
-                  <Text style={styles.inputTitle}>
-                    Celular
-                    {touched.celular && errors.celular ? (
-                      <Text style={styles.errorText}>* Campo obrigatório</Text>
-                    ) : null}
-                  </Text>
-                  <TextInput
-                    style={styles.input}
-                    onChangeText={handleChange("celular")}
-                    onBlur={handleBlur("celular")}
-                    value={values.celular}
-                    keyboardType="numeric"
-                  />
+                    <Text style={styles.inputTitle}>
+                      Celular
+                      {touched.phone && errors.phone ? (
+                        <Text style={styles.errorText}>
+                          * Campo obrigatório
+                        </Text>
+                      ) : null}
+                    </Text>
+                    <TextInput
+                      style={styles.input}
+                      onChangeText={handleChange("phone")}
+                      onBlur={handleBlur("phone")}
+                      value={values.phone}
+                      keyboardType="numeric"
+                    />
 
-                  <Text style={styles.inputTitle}>
-                    E-mail
-                    {touched.email && errors.email ? (
-                      <Text style={styles.errorText}>* Campo obrigatório</Text>
-                    ) : null}
-                  </Text>
-                  <TextInput
-                    style={styles.input}
-                    onChangeText={handleChange("email")}
-                    onBlur={handleBlur("email")}
-                    value={values.email}
-                    keyboardType={"email-address"}
-                  />
+                    <Text style={styles.inputTitle}>
+                      Senha{" "}
+                      {touched.password && errors.password ? (
+                        <Text style={styles.errorText}>
+                          * Campo obrigatório
+                        </Text>
+                      ) : null}
+                    </Text>
 
-                  <TouchableOpacity onPress={() => setShow(true)}>
+                    <TextInput
+                      style={styles.input}
+                      onChangeText={handleChange("password")}
+                      onBlur={handleBlur("password")}
+                      value={values.password}
+                    />
+
+                    {/* <TouchableOpacity onPress={() => setShow(true)}>
                     <Text
                       style={{
-                        color: "#1f9117",
+                        color: "#19CEDB",
                         paddingVertical: 10,
                         fontSize: 18,
                       }}
@@ -178,32 +193,19 @@ export default function Register({ navigation }) {
                       is24Hour={true}
                       onChange={onChange}
                     />
-                  )}
+                  )} */}
 
-                  <Text style={styles.inputTitle}>
-                    Senha{" "}
-                    {touched.senha && errors.senha ? (
-                      <Text style={styles.errorText}>* Campo obrigatório</Text>
-                    ) : null}
-                  </Text>
+                    <Button title="Cadastrar" onPress={handleSubmit} />
+                  </View>
+                )}
+              </Formik>
 
-                  <TextInput
-                    style={styles.input}
-                    onChangeText={handleChange("senha")}
-                    onBlur={handleBlur("senha")}
-                    value={values.senha}
-                  />
-
-                  <Button title="Cadastrar" onPress={handleSubmit} />
-                </View>
-              )}
-            </Formik>
-
-            <TouchableOpacity onPress={() => navigation.goBack()}>
-              <Text style={{ textAlign: "center" }}>Voltar</Text>
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
+              <TouchableOpacity onPress={() => navigation.goBack()}>
+                <Text style={{ textAlign: "center" }}>Voltar</Text>
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+        </ImageBackground>
       </SafeAreaView>
     </TouchableWithoutFeedback>
   );
@@ -212,8 +214,7 @@ export default function Register({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
-    padding: 10,
+    backgroundColor: "#f7f7f7",
   },
   title: {
     fontWeight: "bold",
@@ -221,7 +222,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   subtitle: {
-    color: "#1f9117",
+    color: "#19CEDB",
     fontSize: 18,
     textAlign: "center",
   },
