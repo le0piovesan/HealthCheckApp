@@ -14,7 +14,7 @@ import {
 } from "react-native";
 import Button from "../components/Button";
 
-import { format } from "date-fns";
+import { parseISO, format } from "date-fns";
 
 import {
   Ionicons,
@@ -52,7 +52,14 @@ export default function Home({ route, navigation }) {
           const responseAppointments = await axios.get(
             `appointments/clients/${responseClient.data.id}`
           );
-          setListAppointments(responseAppointments.data);
+
+          const predefinedData = responseAppointments.data;
+
+          predefinedData.sort(
+            (a, b) => a.appointment_date < b.appointment_date
+          );
+
+          setListAppointments(predefinedData);
         } catch (error) {
           console.log(error);
         }
@@ -63,14 +70,33 @@ export default function Home({ route, navigation }) {
     }
   };
 
-  // const handleFavorite = async ({ id, name, date, insurance }) => {
-  //   const response = await Consulta.update(id, {
-  //     name,
-  //     date,
-  //     insurance: !insurance,
-  //   });
-  //   // fetchData();
-  // };
+  const confirmarConsulta = (id) => {
+    Alert.alert(
+      "Health Check",
+      "Tem certeza que deseja confirmar a consulta?",
+      [
+        {
+          text: "Sim",
+          onPress: async () => {
+            try {
+              const response = await axios.patch(`appointments/${id}`, {
+                status: "Concluída",
+              });
+              console.log(response.data);
+              setModalVisible(null);
+              await fetchData();
+            } catch (error) {
+              console.log(error);
+            }
+          },
+        },
+        {
+          text: "Voltar",
+        },
+      ],
+      { cancelable: false }
+    );
+  };
 
   const cancelarConsulta = (id) => {
     Alert.alert(
@@ -185,7 +211,13 @@ export default function Home({ route, navigation }) {
                       margin: 10,
                       padding: 10,
                       borderColor: "#19CEDB",
-                      opacity: e.status === "Cancelada" ? 0.6 : 1,
+                      opacity: e.status !== "Pendente" ? 0.5 : 1,
+                      backgroundColor:
+                        e.status === "Concluída"
+                          ? "#2bd115"
+                          : e.status === "Cancelada"
+                          ? "#9c2432"
+                          : "transparent",
                     }}
                     key={e.id}
                     onPress={() => setModalVisible(e)}
@@ -212,7 +244,7 @@ export default function Home({ route, navigation }) {
                       <Text>
                         Data da consulta:{" "}
                         <Text style={{ fontWeight: "bold" }}>
-                          {format(new Date(e.appointment_date), "dd/MM/yyyy", {
+                          {format(parseISO(e.appointment_date), "dd/MM/yyyy", {
                             timeZone: "America/Sao_Paulo",
                           })}
                         </Text>
@@ -223,11 +255,9 @@ export default function Home({ route, navigation }) {
                       style={{
                         paddingHorizontal: 8,
                         alignItems: "center",
-                        opacity: e.status !== "Pendente" ? 0.2 : 1,
+                        opacity: e.status !== "Pendente" ? 0.8 : 1,
                       }}
                       disabled={e.status !== "Pendente"}
-
-                      // onPress={() => handleFavorite(e)}
                     >
                       {e.status === "Pendente" ? (
                         <Ionicons
@@ -305,7 +335,7 @@ export default function Home({ route, navigation }) {
                 Data da consulta:{"\n"}
                 <Text style={{ fontWeight: "bold" }}>
                   {format(
-                    new Date(modalVisible.appointment_date),
+                    parseISO(modalVisible.appointment_date),
                     "dd/MM/yyyy",
                     {
                       timeZone: "America/Sao_Paulo",
@@ -330,24 +360,49 @@ export default function Home({ route, navigation }) {
                 </Text>
               </Text>
 
-              <TouchableOpacity
+              <View
                 style={{
-                  paddingHorizontal: 8,
-                  alignItems: "center",
-                  opacity: modalVisible.status !== "Pendente" ? 0.2 : 1,
+                  flexDirection: "row",
+                  justifyContent: "center",
                 }}
-                disabled={modalVisible.status !== "Pendente"}
-                onPress={() => cancelarConsulta(modalVisible.id)}
               >
-                <MaterialCommunityIcons
-                  name="book-cancel"
-                  size={24}
-                  color="#9c2432"
-                />
-                <Text style={{ textAlign: "center" }}>
-                  Não Posso{"\n"}Comparecer
-                </Text>
-              </TouchableOpacity>
+                <TouchableOpacity
+                  style={{
+                    paddingHorizontal: 8,
+                    alignItems: "center",
+                    opacity: modalVisible.status !== "Pendente" ? 0.2 : 1,
+                  }}
+                  disabled={modalVisible.status !== "Pendente"}
+                  onPress={() => confirmarConsulta(modalVisible.id)}
+                >
+                  <MaterialCommunityIcons
+                    name="book"
+                    size={30}
+                    color="#2bd115"
+                  />
+                  <Text style={{ textAlign: "center" }}>
+                    Já fui a{"\n"}Consulta
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={{
+                    paddingHorizontal: 8,
+                    alignItems: "center",
+                    opacity: modalVisible.status !== "Pendente" ? 0.2 : 1,
+                  }}
+                  disabled={modalVisible.status !== "Pendente"}
+                  onPress={() => cancelarConsulta(modalVisible.id)}
+                >
+                  <MaterialCommunityIcons
+                    name="book-cancel"
+                    size={30}
+                    color="#9c2432"
+                  />
+                  <Text style={{ textAlign: "center" }}>
+                    Não Posso{"\n"}Comparecer
+                  </Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </Modal>
         )}
@@ -391,9 +446,13 @@ const styles = StyleSheet.create({
   modalView: {
     flex: 1,
     elevation: 5,
-    borderRadius: 5,
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    borderWidth: 2,
+    borderColor: "#178791",
     padding: 16,
-    backgroundColor: "#fff",
+    backgroundColor: "#f0f0f0",
+    marginTop: "70%",
   },
   textDetails: {
     fontSize: 18,
